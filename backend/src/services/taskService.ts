@@ -52,27 +52,20 @@ export function createTask(input: CreateTaskInput): Task {
 }
 
 export function updateTask(id: string, input: UpdateTaskInput): Task | null {
-  const db = getDb();
-
-  const existing = getTaskById(id);
-  if (!existing) {
-    return null;
+  if (input.title !== undefined && input.title.trim() === '') {
+    throw new Error('Title cannot be empty');
   }
 
-  const newTitle = input.title !== undefined ? input.title.trim() : existing.title;
-  const newCompleted = input.completed !== undefined ? (input.completed ? 1 : 0) : (existing.completed ? 1 : 0);
-
-  const stmt = db.prepare<[string, number, string]>(
-    'UPDATE tasks SET title = ?, completed = ? WHERE id = ?'
-  );
-  stmt.run(newTitle, newCompleted, id);
-
-  return {
-    id,
-    title: newTitle,
-    completed: newCompleted === 1,
-    createdAt: existing.createdAt,
-  };
+  const db = getDb();
+  const transact = db.transaction(() => {
+    const existing = getTaskById(id);
+    if (!existing) return null;
+    const newTitle = input.title !== undefined ? input.title.trim() : existing.title;
+    const newCompleted = input.completed !== undefined ? (input.completed ? 1 : 0) : (existing.completed ? 1 : 0);
+    db.prepare('UPDATE tasks SET title = ?, completed = ? WHERE id = ?').run(newTitle, newCompleted, id);
+    return { id, title: newTitle, completed: newCompleted === 1, createdAt: existing.createdAt };
+  });
+  return transact() as Task | null;
 }
 
 export function deleteTask(id: string): boolean {

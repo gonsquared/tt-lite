@@ -74,6 +74,18 @@ describe('taskService', () => {
       const tasks = getAllTasks();
       expect(typeof tasks[0].completed).toBe('boolean');
     });
+
+    it('returns tasks ordered most-recently-created first', async () => {
+      const first = createTask({ title: 'First Task' });
+      // Small delay to ensure distinct createdAt timestamps
+      await new Promise((r) => setTimeout(r, 5));
+      const second = createTask({ title: 'Second Task' });
+
+      const tasks = getAllTasks();
+      expect(tasks).toHaveLength(2);
+      expect(tasks[0].id).toBe(second.id);
+      expect(tasks[1].id).toBe(first.id);
+    });
   });
 
   describe('getTaskById', () => {
@@ -127,6 +139,17 @@ describe('taskService', () => {
       const created = createTask({ title: 'Original' });
       const updated = updateTask(created.id, { title: '  Trimmed  ' });
       expect(updated?.title).toBe('Trimmed');
+    });
+  });
+
+  describe('closeDb', () => {
+    it('is idempotent — calling twice does not throw', () => {
+      // Ensure DB is open by performing an operation
+      createTask({ title: 'Idempotent check' });
+      expect(() => {
+        closeDb();
+        closeDb();
+      }).not.toThrow();
     });
   });
 

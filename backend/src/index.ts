@@ -27,10 +27,8 @@ export async function buildApp(): Promise<ReturnType<typeof Fastify>> {
   fastify.setErrorHandler((error, _request, reply) => {
     fastify.log.error(error);
     const statusCode = error.statusCode ?? 500;
-    return reply.status(statusCode).send({
-      error: error.message ?? 'Internal Server Error',
-      statusCode,
-    });
+    const message = statusCode >= 500 ? 'Internal Server Error' : (error.message ?? 'Internal Server Error');
+    return reply.status(statusCode).send({ error: message, statusCode });
   });
 
   return fastify;

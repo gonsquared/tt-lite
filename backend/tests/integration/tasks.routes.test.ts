@@ -118,6 +118,12 @@ describe('POST /api/tasks', () => {
     expect(res.status).toBe(201);
     expect(res.body.title).toHaveLength(500);
   });
+
+  it('returns 400 when title is whitespace only', async () => {
+    const res = await request.post('/api/tasks').send({ title: '   ' });
+    expect(res.status).toBe(400);
+    expect(res.body.statusCode).toBe(400);
+  });
 });
 
 describe('PUT /api/tasks/:id', () => {
@@ -192,6 +198,12 @@ describe('PUT /api/tasks/:id', () => {
       .send({ title: 'x'.repeat(501) });
     expect(res.status).toBe(400);
   });
+
+  it('returns 400 when id path param is not a UUID', async () => {
+    const res = await request.put('/api/tasks/not-a-uuid').send({ title: 'Ghost' });
+    expect(res.status).toBe(400);
+    expect(res.body.statusCode).toBe(400);
+  });
 });
 
 describe('DELETE /api/tasks/:id', () => {
@@ -233,5 +245,21 @@ describe('DELETE /api/tasks/:id', () => {
     const listRes = await request.get('/api/tasks');
     expect(listRes.body).toHaveLength(1);
     expect(listRes.body[0].title).toBe('Keep me');
+  });
+
+  it('returns 400 when id path param is not a UUID', async () => {
+    const res = await request.delete('/api/tasks/not-a-uuid');
+    expect(res.status).toBe(400);
+    expect(res.body.statusCode).toBe(400);
+  });
+
+  it('returns 404 when deleting the same task a second time', async () => {
+    const createRes = await request.post('/api/tasks').send({ title: 'Delete twice' });
+    const id = createRes.body.id;
+
+    await request.delete(`/api/tasks/${id}`);
+    const res = await request.delete(`/api/tasks/${id}`);
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({ error: 'Task not found', statusCode: 404 });
   });
 });

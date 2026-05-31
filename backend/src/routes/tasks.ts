@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import { createTaskSchema, updateTaskSchema } from '../schemas/taskSchemas.js';
 import {
   getAllTasks,
@@ -7,6 +7,10 @@ import {
   updateTask,
   deleteTask,
 } from '../services/taskService.js';
+
+const idParamSchema = z.object({
+  id: z.string().uuid('id must be a valid UUID'),
+});
 
 function sendValidationError(reply: FastifyReply, error: ZodError): FastifyReply {
   const message = error.errors.map((e) => e.message).join('; ');
@@ -35,7 +39,11 @@ const taskRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put(
     '/api/tasks/:id',
     async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-      const { id } = request.params;
+      const paramResult = idParamSchema.safeParse(request.params);
+      if (!paramResult.success) {
+        return sendValidationError(reply, paramResult.error);
+      }
+      const { id } = paramResult.data;
 
       const parseResult = updateTaskSchema.safeParse(request.body);
       if (!parseResult.success) {
@@ -55,7 +63,11 @@ const taskRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete(
     '/api/tasks/:id',
     async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-      const { id } = request.params;
+      const paramResult = idParamSchema.safeParse(request.params);
+      if (!paramResult.success) {
+        return sendValidationError(reply, paramResult.error);
+      }
+      const { id } = paramResult.data;
 
       const deleted = deleteTask(id);
       if (!deleted) {

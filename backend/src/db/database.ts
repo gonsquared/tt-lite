@@ -1,12 +1,11 @@
 import Database from 'better-sqlite3';
 
-const DATABASE_PATH = process.env.DATABASE_PATH ?? './tasks.db';
-
-let db: Database.Database;
+let db: Database.Database | undefined;
 
 export function getDb(): Database.Database {
   if (!db) {
-    db = new Database(DATABASE_PATH);
+    const databasePath = process.env.DATABASE_PATH ?? './tasks.db';
+    db = new Database(databasePath);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     initSchema(db);
@@ -28,6 +27,6 @@ function initSchema(database: Database.Database): void {
 export function closeDb(): void {
   if (db) {
     db.close();
-    db = undefined as unknown as Database.Database;
+    db = undefined;
   }
 }
