@@ -6,11 +6,11 @@ Always use the following workflow:
 
 1. software-architecture-agent
 2. ui-design-agent
-3. be-coding-agent
-4. fe-coding-agent
+3. backend-coding-agent
+4. frontend-coding-agent
 5. testing-agent
-6. code-review-be-agent
-7. code-review-fe-agent
+6. backend-code-review-agent
+7. frontend-code-review-agent
 8. readme-agent
 
 Do not skip review steps.
