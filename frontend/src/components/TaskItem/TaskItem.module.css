@@ -1,0 +1,110 @@
+.item {
+  list-style: none;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  min-height: 56px;
+}
+
+/* Checkbox */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+/* Ensure 44x44 touch target for checkbox via the label */
+.checkboxLabel {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+}
+
+/* Title */
+.titleArea {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.titleButton {
+  flex: 1;
+  text-align: left;
+  font-size: 1rem;
+  color: #1a1a1a;
+  background: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  line-height: 1.4;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.titleButton:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.titleButton.completed {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+/* Delete button */
+.deleteButton {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #dc2626;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  min-height: 44px;
+  min-width: 70px;
+}
+
+.deleteButton:hover {
+  background-color: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.deleteButton:active {
+  background-color: #fee2e2;
+}
+
+/* Error text */
+.errorText {
+  padding: 4px 12px 8px 12px;
+  font-size: 0.8rem;
+  color: #dc2626;
+}

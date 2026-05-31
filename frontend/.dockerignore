@@ -1,0 +1,9 @@
+node_modules
+dist
+*.md
+\!README.md
+.env
+.env.*
+cypress/
+.DS_Store
+*.log

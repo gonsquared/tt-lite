@@ -1,0 +1,37 @@
+.group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.button {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+  min-height: 44px;
+}
+
+.button:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.button.active {
+  background-color: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.button.active:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
