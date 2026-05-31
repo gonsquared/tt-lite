@@ -56,12 +56,14 @@ export function TaskForm() {
           aria-invalid={error ? 'true' : undefined}
           autoComplete="off"
           maxLength={500}
+          data-testid="task-input"
         />
         <button
           type="submit"
           className={styles.submitButton}
           disabled={isSubmitting}
           aria-label="Add task"
+          data-testid="add-task-btn"
         >
           {isSubmitting ? 'Adding...' : 'Add Task'}
         </button>
