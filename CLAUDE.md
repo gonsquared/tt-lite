@@ -8,7 +8,7 @@ Always use the following workflow:
 2. ui-design-agent
 3. backend-coding-agent
 4. frontend-coding-agent
-5. testing-agent
+5. qa-agent
 6. backend-code-review-agent
 7. frontend-code-review-agent
 8. readme-agent
