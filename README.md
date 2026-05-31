@@ -25,17 +25,19 @@ A full-stack task management application. Users can create, edit, complete, filt
 |---|---|---|
 | Backend language | TypeScript on Bun | Type safety, shared language with frontend, strong ecosystem; Bun as runtime and package manager |
 | Backend framework | Fastify v4 | Low overhead, built-in schema validation hooks, Pino logger included |
+| Security middleware | @fastify/helmet + @fastify/cors | HTTP security headers and CORS policy enforcement |
 | Input validation | Zod | Composable schemas, precise error messages, TypeScript inference |
-| Database | SQLite via better-sqlite3 | Zero-dependency server, synchronous API simplifies service layer, appropriate for a single-node app |
+| Database | SQLite via bun:sqlite | Bun's built-in SQLite driver — zero native addon, synchronous API simplifies service layer, appropriate for a single-node app |
 | Frontend framework | React 18 with Vite | Fast dev server, native ESM, minimal configuration |
 | Rendering strategy | Client-Side Rendering (SPA) | Simple deployment, no SSR complexity needed at this scale |
 | API style | REST over HTTP/JSON | Straightforward CRUD, no query complexity requiring GraphQL |
 | State management | React Context + useReducer | Sufficient for this data shape; avoids adding Redux/Zustand as a dependency |
+| Theme | Dark/light mode via ThemeContext | User preference persisted to localStorage; applied via `data-theme` attribute on `<html>` |
 | Styling | CSS Modules | Scoped styles without a runtime, no utility-class sprawl |
 | Backend tests | Vitest + Supertest | In-process Fastify server; fast, no network round-trip |
 | Frontend tests | Vitest + React Testing Library | Component-level unit tests that exercise real DOM behaviour |
 | E2E tests | Cypress | Full browser automation covering the 6 critical user flows |
-| Containerisation | Docker multi-stage builds | Small production images; native module compilation (better-sqlite3) handled in the builder stage; uses `oven/bun:1-alpine` base images |
+| Containerisation | Docker multi-stage builds | Small production images; uses `oven/bun:1-alpine` for backend (source run via Bun) and `nginx:alpine` for frontend static serving |
 
 ---
 
@@ -53,25 +55,27 @@ tt-lite/
       services/
         taskService.ts        # Database access layer
       db/
-        database.ts           # better-sqlite3 singleton, schema init (WAL mode)
+        database.ts           # bun:sqlite singleton, schema init (WAL mode)
       schemas/
         taskSchemas.ts        # Zod schemas: createTaskSchema, updateTaskSchema
       types/
         task.ts               # Task type: { id, title, completed, createdAt }
     tests/
       unit/
-        taskService.test.ts   # 21 unit tests (in-memory SQLite)
+        taskService.test.ts   # Unit tests (in-memory SQLite)
       integration/
-        tasks.routes.test.ts  # 27 integration tests via Supertest
+        tasks.routes.test.ts  # Integration tests via Supertest
     Dockerfile                # Multi-stage: oven/bun:1-alpine builder -> runtime
     .dockerignore
+    .env.example
     package.json
   frontend/
     src/
-      App.tsx                 # Root: wraps TaskProvider around AppLayout
+      App.tsx                 # Root: wraps ThemeProvider + TaskProvider around AppLayout
       main.tsx                # React DOM entry point
       context/
         TaskContext.tsx       # Context + useReducer state, async action creators
+        ThemeContext.tsx      # Dark/light theme toggle, persisted to localStorage
       services/
         taskApi.ts            # fetch wrappers for all REST endpoints
       components/             # 12 components, each with a CSS Module
@@ -88,7 +92,7 @@ tt-lite/
         TaskList/
         TaskPage/
       types/
-        task.ts               # Task + FilterType shared types
+        task.ts               # Task and FilterType shared types
       styles/
         global.css
     cypress/
@@ -99,6 +103,7 @@ tt-lite/
         e2e.ts                # Imports commands
     Dockerfile                # Multi-stage: oven/bun:1-alpine builder -> nginx:alpine
     .dockerignore
+    .env.example
     nginx.conf                # Proxies /api/ to backend, SPA fallback routing, gzip
     cypress.config.ts
     package.json
@@ -119,15 +124,23 @@ cd backend
 bun install
 ```
 
-### 2. Start the backend
+### 2. Configure backend environment
+
+```bash
+cp .env.example .env
+```
+
+The defaults in `.env.example` work for local development without changes.
+
+### 3. Start the backend
 
 ```bash
 bun run dev
 ```
 
-The backend starts on `http://localhost:3001`. It creates `tasks.db` in the current directory on first run.
+The backend starts on `http://localhost:3001` using Bun's built-in file watcher (`bun --watch`). It creates `tasks.db` in the current directory on first run.
 
-### 3. Install frontend dependencies
+### 4. Install frontend dependencies
 
 Open a second terminal.
 
@@ -136,7 +149,15 @@ cd frontend
 bun install
 ```
 
-### 4. Start the frontend
+### 5. Configure frontend environment (optional for local dev)
+
+```bash
+cp .env.example .env
+```
+
+During local development the Vite dev server proxies `/api/*` to `http://localhost:3001`, so `VITE_API_BASE_URL` is not required unless you want to point at a different backend host.
+
+### 6. Start the frontend
 
 ```bash
 bun run dev
@@ -150,24 +171,24 @@ Open `http://localhost:5173` in a browser.
 
 ## Environment Variables
 
-### Backend
+### Backend (`backend/.env.example`)
 
 Set these in the shell or in a `.env` file before running the backend. All variables have working defaults for local development.
 
 | Variable | Default | Description |
 |---|---|---|
-| `DATABASE_PATH` | `./tasks.db` | Path to the SQLite database file. Use `:memory:` for ephemeral test databases. |
 | `PORT` | `3001` | TCP port the Fastify server listens on. |
+| `DATABASE_PATH` | `./tasks.db` | Path to the SQLite database file. Use `:memory:` for ephemeral test databases. |
 | `CORS_ORIGIN` | `http://localhost:5173` | Allowed CORS origin. Must match the frontend URL in production. |
 | `LOG_LEVEL` | `info` | Pino log level. Accepted values: `trace`, `debug`, `info`, `warn`, `error`, `fatal`. |
 
-### Frontend
+### Frontend (`frontend/.env.example`)
 
-Vite bakes `VITE_*` variables into the bundle at build time. They cannot be changed at runtime.
+Vite bakes `VITE_*` variables into the bundle at build time. They cannot be changed at runtime without rebuilding.
 
-| Variable | Default | Description |
+| Variable | Default (`.env.example`) | Description |
 |---|---|---|
-| `VITE_API_BASE_URL` | `/api` | Base path for all API requests. When using Docker Compose the default `/api` is correct because nginx proxies `/api/` to the backend. In local dev the Vite proxy handles it. Set this before running `bun run build`. |
+| `VITE_API_BASE_URL` | `http://localhost:3001/api` | Base URL for all API requests. In local dev the Vite proxy handles `/api/*` automatically, so this variable is only needed when targeting a non-default backend host. When using Docker Compose the nginx reverse proxy handles routing and this variable is not set as a build arg. |
 
 ---
 
@@ -177,9 +198,9 @@ Vite bakes `VITE_*` variables into the bundle at build time. They cannot be chan
 
 | Script | Command | Description |
 |---|---|---|
-| `dev` | `tsx src/index.ts` | Runs the server with hot reload via tsx. |
-| `build` | `tsc` | Compiles TypeScript to `dist/`. |
-| `start` | `node dist/index.js` | Runs the compiled production build. |
+| `dev` | `bun --watch src/index.ts` | Runs the server with Bun's built-in file watcher for hot reload. |
+| `build` | `tsc` | Type-checks and compiles TypeScript to `dist/`. |
+| `start` | `bun dist/index.js` | Runs the compiled production build with Bun. |
 | `test` | `vitest run` | Runs all unit and integration tests once. |
 | `test:coverage` | `vitest run --coverage` | Runs tests with v8 coverage report. |
 
@@ -247,7 +268,7 @@ Both test suites use an in-memory SQLite database (`DATABASE_PATH=:memory:`) and
 ```bash
 cd backend
 
-# Run unit tests (21 tests) + integration tests (27 tests)
+# Run all unit and integration tests
 bun run test
 
 # Run with coverage report
@@ -263,14 +284,26 @@ bun run test:coverage
 ```bash
 cd frontend
 
-# Run all Vitest unit tests (60 tests across 11 test files)
+# Run all Vitest unit tests (11 test files)
 bun run test
 
 # Run with coverage report
 bun run test:coverage
 ```
 
-Test files live in `frontend/src/__tests__/`. Each component and the `taskApi` service module has a corresponding test file.
+Test files live in `frontend/src/__tests__/`. Each component and the `taskApi` service module has a corresponding test file:
+
+- `AppFooter.test.tsx`
+- `EmptyState.test.tsx`
+- `ErrorMessage.test.tsx`
+- `FilterBar.test.tsx`
+- `InlineEditInput.test.tsx`
+- `LoadingSpinner.test.tsx`
+- `TaskContext.test.tsx`
+- `TaskForm.test.tsx`
+- `TaskItem.test.tsx`
+- `TaskList.test.tsx`
+- `taskApi.test.ts`
 
 ### Cypress E2E tests
 
@@ -329,20 +362,20 @@ Two custom Cypress commands defined in `cypress/support/commands.ts` support fas
 
 ### docker-compose.yml
 
-The `docker-compose.yml` at the project root orchestrates both services. The backend mounts a named Docker volume so the SQLite file persists across container restarts.
+The `docker-compose.yml` at the project root orchestrates both services. The backend mounts a named Docker volume so the SQLite file persists across container restarts. The frontend container waits for the backend health check to pass before starting.
 
 ```bash
 # Build images and start both services
-docker-compose up --build
+docker compose up --build
 
 # Run in the background
-docker-compose up --build -d
+docker compose up --build -d
 
 # Stop and remove containers (volume is preserved)
-docker-compose down
+docker compose down
 
 # Stop and remove containers AND the SQLite volume
-docker-compose down -v
+docker compose down -v
 ```
 
 Once running, the application is available at `http://localhost` (port 80, served by nginx). nginx proxies all `/api/` requests to the backend container on port 3001.
@@ -360,21 +393,31 @@ docker build -t tt-lite-frontend ./frontend
 ### Image details
 
 **Backend** (`backend/Dockerfile`):
-- Builder stage: `oven/bun:1-alpine` — installs all dependencies and compiles TypeScript.
-- Runtime stage: `oven/bun:1-alpine` — installs production-only dependencies, copies compiled `dist/`.
+- Builder stage: `oven/bun:1-alpine` — installs dependencies with `bun install --frozen-lockfile`.
+- Runtime stage: `oven/bun:1-alpine` — copies `node_modules`, `src/`, and config files; runs TypeScript source directly via `bun src/index.ts`.
 - Runs as a non-root user (`appuser`).
 - `HEALTHCHECK` polls `GET /api/health` every 30 seconds.
 - Exposes port `3001`.
+- SQLite data is stored at `/data/tasks.db` (mounted as the `sqlite-data` named volume in Compose).
 
 **Frontend** (`frontend/Dockerfile`):
-- Builder stage: `oven/bun:1-alpine` — installs dependencies and runs `bun run build`.
+- Builder stage: `oven/bun:1-alpine` — installs dependencies and runs `bun run build` to produce the static bundle in `dist/`.
 - Production stage: `nginx:alpine` — serves the static bundle from `/usr/share/nginx/html`.
 - Custom `nginx.conf` enables gzip compression, long-lived cache headers for hashed assets, proxies `/api/` to `http://backend:3001`, and uses a SPA fallback (`try_files`) for client-side routing.
 - Exposes port `80`.
 
 ### Environment variables in Docker
 
-Set backend variables in `docker-compose.yml` under the backend service's `environment` block. The `VITE_API_BASE_URL` frontend variable must be set as a Docker build argument (`--build-arg`) before the frontend image is built, because Vite bakes it into the bundle at build time.
+Backend environment variables are set in the `environment` block of the backend service in `docker-compose.yml`. The current defaults:
+
+| Variable | Value in Compose |
+|---|---|
+| `DATABASE_PATH` | `/data/tasks.db` |
+| `PORT` | `3001` |
+| `CORS_ORIGIN` | `http://localhost` |
+| `LOG_LEVEL` | `info` |
+
+The frontend image does not receive `VITE_API_BASE_URL` as a build argument in the current Compose configuration. The `taskApi.ts` fallback (`/api`) is used, and nginx proxies `/api/` requests to the backend container.
 
 ---
 
@@ -389,14 +432,14 @@ The backend defaults `CORS_ORIGIN` to `http://localhost:5173`. If the frontend r
 **`VITE_API_BASE_URL` is not picking up changes.**
 This variable is baked into the bundle at `bun run build` time. Set it in the environment before building; changing it afterwards has no effect without rebuilding.
 
-**`better-sqlite3` native compilation fails during `bun install`.**
-`better-sqlite3` contains a native Node.js addon and requires build tools (`python3`, `make`, `g++`). The Docker builder stage (`oven/bun:1-alpine`) installs these automatically. For local development on a machine without build tools, install `build-essential` (Debian/Ubuntu) or `xcode-select --install` (macOS).
-
 **Cypress tests fail with "cannot connect to http://localhost:5173" or "http://localhost:3001".**
 Both the frontend dev server and the backend must be running before Cypress is started. Start them in separate terminals as described in the [Testing](#testing) section.
 
 **Cypress tests leave behind tasks that pollute later test runs.**
 Each test in `tasks.cy.ts` calls `cy.clearAllTasksViaApi()` in `beforeEach`, which deletes all tasks via the REST API. If this command fails (for example because the backend is not running), subsequent tests will see stale data.
+
+**Frontend build output looks correct locally but the wrong API URL is used in production.**
+When building the frontend image for an environment where the backend is not behind the same nginx proxy, pass `VITE_API_BASE_URL` as a build argument: `docker build --build-arg VITE_API_BASE_URL=https://api.example.com/api -t tt-lite-frontend ./frontend`. You must also update the Vite config or `Dockerfile` to accept and forward this build argument.
 
 ---
 
@@ -405,7 +448,5 @@ Each test in `tasks.cy.ts` calls `cy.clearAllTasksViaApi()` in `beforeEach`, whi
 - **No authentication or authorisation.** All tasks are globally shared; any client can read, create, update, or delete any task.
 - **Single-node only.** SQLite is not designed for concurrent writes from multiple processes. Horizontal scaling of the backend is not supported without replacing the database.
 - **No pagination.** `GET /api/tasks` always returns the full task list. Large task counts may impact performance.
-- **docker-compose.yml is not yet committed.** The file must be created at the project root before Docker Compose commands will work. See the Docker section above for the required service definitions.
-- **No frontend `.env.example` file.** Developers must know to set `VITE_API_BASE_URL` manually when building for environments other than Docker Compose.
 - **No CI pipeline.** Automated test runs on pull requests are not yet configured.
 - **Cypress requires manual service startup.** There is no script that starts both servers and runs Cypress in a single command.

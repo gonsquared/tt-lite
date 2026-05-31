@@ -21,14 +21,13 @@ function rowToTask(row: TaskRow): Task {
 
 export function getAllTasks(): Task[] {
   const db = getDb();
-  const stmt = db.prepare<[], TaskRow>('SELECT id, title, completed, created_at FROM tasks ORDER BY created_at DESC');
-  return stmt.all().map(rowToTask);
+  const rows = db.prepare('SELECT id, title, completed, created_at FROM tasks ORDER BY created_at DESC').all() as TaskRow[];
+  return rows.map(rowToTask);
 }
 
 export function getTaskById(id: string): Task | null {
   const db = getDb();
-  const stmt = db.prepare<[string], TaskRow>('SELECT id, title, completed, created_at FROM tasks WHERE id = ?');
-  const row = stmt.get(id);
+  const row = db.prepare('SELECT id, title, completed, created_at FROM tasks WHERE id = ?').get(id) as TaskRow | null;
   return row ? rowToTask(row) : null;
 }
 
@@ -38,10 +37,7 @@ export function createTask(input: CreateTaskInput): Task {
   const createdAt = new Date().toISOString();
   const trimmedTitle = input.title.trim();
 
-  const stmt = db.prepare<[string, string, number, string]>(
-    'INSERT INTO tasks (id, title, completed, created_at) VALUES (?, ?, ?, ?)'
-  );
-  stmt.run(id, trimmedTitle, 0, createdAt);
+  db.prepare('INSERT INTO tasks (id, title, completed, created_at) VALUES (?, ?, ?, ?)').run(id, trimmedTitle, 0, createdAt);
 
   return {
     id,
@@ -70,7 +66,6 @@ export function updateTask(id: string, input: UpdateTaskInput): Task | null {
 
 export function deleteTask(id: string): boolean {
   const db = getDb();
-  const stmt = db.prepare<[string]>('DELETE FROM tasks WHERE id = ?');
-  const result = stmt.run(id);
+  const result = db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
   return result.changes > 0;
 }
