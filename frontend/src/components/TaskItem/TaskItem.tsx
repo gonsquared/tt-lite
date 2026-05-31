@@ -28,7 +28,6 @@ export function TaskItem({ task }: TaskItemProps) {
   const saveErrorId = `save-error-${task.id}`;
   const deleteErrorId = `delete-error-${task.id}`;
 
-  // Focus the edit input when editing starts
   useEffect(() => {
     if (isEditing) {
       editInputRef.current?.focus();
@@ -44,7 +43,6 @@ export function TaskItem({ task }: TaskItemProps) {
   const commitEdit = useCallback(async () => {
     const trimmed = editValue.trim();
 
-    // Cancel if empty or unchanged
     if (!trimmed) {
       setIsEditing(false);
       setEditValue(task.title);
@@ -62,7 +60,6 @@ export function TaskItem({ task }: TaskItemProps) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save task';
       setSaveError(message);
-      // Stay in edit mode on save failure
     }
   }, [editValue, task.title, task.id, updateTask]);
 
@@ -70,7 +67,6 @@ export function TaskItem({ task }: TaskItemProps) {
     setIsEditing(false);
     setEditValue(task.title);
     setSaveError(null);
-    // Return focus to the title button
     titleButtonRef.current?.focus();
   }
 
@@ -78,7 +74,6 @@ export function TaskItem({ task }: TaskItemProps) {
     try {
       await toggleTask(task.id, task.completed);
     } catch (err) {
-      // toggle failure is non-critical; could be surfaced if needed
       console.error('Toggle failed:', err);
     }
   }
@@ -96,7 +91,6 @@ export function TaskItem({ task }: TaskItemProps) {
   return (
     <li className={styles.item}>
       <div className={styles.row}>
-        {/* Checkbox */}
         <label htmlFor={`task-checkbox-${task.id}`} className={`${styles.checkboxLabel} sr-only`}>
           {`Mark '${task.title}' as ${task.completed ? 'active' : 'complete'}`}
         </label>
@@ -108,7 +102,6 @@ export function TaskItem({ task }: TaskItemProps) {
           onChange={handleToggle}
         />
 
-        {/* Title or edit input */}
         <div className={styles.titleArea}>
           {isEditing ? (
             <InlineEditInput
@@ -133,18 +126,23 @@ export function TaskItem({ task }: TaskItemProps) {
           )}
         </div>
 
-        {/* Delete button */}
         <button
           type="button"
           className={styles.deleteButton}
           onClick={() => void handleDelete()}
           aria-label={`Delete task: ${task.title}`}
         >
-          Delete
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+            <path
+              d="M1 1l11 11M12 1L1 12"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
       </div>
 
-      {/* Error messages */}
       {saveError && (
         <p id={saveErrorId} role="alert" className={styles.errorText}>
           {saveError}

@@ -1,16 +1,18 @@
 .input {
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 4px 8px;
-  font-family: inherit;
-  font-size: 1rem;
-  border: 2px solid #2563eb;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #1a1a1a;
+  padding: 0.2rem 0.35rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1.5;
-}
-
-.input:focus {
+  min-height: 44px;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+  transition: background-color 0.35s ease;
 }
