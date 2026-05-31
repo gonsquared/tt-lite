@@ -11,7 +11,7 @@ Always use the following workflow:
 5. testing-agent
 6. code-review-be-agent
 7. code-review-fe-agent
-8. readme-docs-agent
+8. readme-agent
 
 Do not skip review steps.
 
@@ -110,7 +110,7 @@ Prefer production-ready Docker configurations.
 
 ## Documentation Rules
 
-readme-docs-agent must:
+readme-agent must:
 
 - generate README.md
 - document setup instructions
