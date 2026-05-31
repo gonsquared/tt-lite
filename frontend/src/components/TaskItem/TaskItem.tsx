@@ -76,7 +76,7 @@ export function TaskItem({ task }: TaskItemProps) {
 
   async function handleToggle(_e: ChangeEvent<HTMLInputElement>) {
     try {
-      await toggleTask(task.id);
+      await toggleTask(task.id, task.completed);
     } catch (err) {
       // toggle failure is non-critical; could be surfaced if needed
       console.error('Toggle failed:', err);
@@ -97,18 +97,16 @@ export function TaskItem({ task }: TaskItemProps) {
     <li className={styles.item}>
       <div className={styles.row}>
         {/* Checkbox */}
-        <label className={styles.checkboxLabel}>
-          <span className="sr-only">
-            {`Mark '${task.title}' as ${task.completed ? 'active' : 'complete'}`}
-          </span>
-          <input
-            type="checkbox"
-            className={styles.checkbox}
-            checked={task.completed}
-            onChange={handleToggle}
-            aria-label={`Mark '${task.title}' as ${task.completed ? 'active' : 'complete'}`}
-          />
+        <label htmlFor={`task-checkbox-${task.id}`} className={`${styles.checkboxLabel} sr-only`}>
+          {`Mark '${task.title}' as ${task.completed ? 'active' : 'complete'}`}
         </label>
+        <input
+          id={`task-checkbox-${task.id}`}
+          type="checkbox"
+          className={styles.checkbox}
+          checked={task.completed}
+          onChange={handleToggle}
+        />
 
         {/* Title or edit input */}
         <div className={styles.titleArea}>

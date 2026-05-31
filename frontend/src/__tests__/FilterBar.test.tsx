@@ -6,7 +6,7 @@ import { useTaskContext } from '../context/TaskContext';
 
 vi.mock('../context/TaskContext');
 
-const mockDispatch = vi.fn();
+const mockSetFilter = vi.fn();
 
 describe('FilterBar', () => {
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe('FilterBar', () => {
         isLoading: false,
         error: null,
       },
-      dispatch: mockDispatch,
+      setFilter: mockSetFilter,
       addTask: vi.fn(),
       updateTask: vi.fn(),
       deleteTask: vi.fn(),
@@ -44,9 +44,9 @@ describe('FilterBar', () => {
     expect(screen.getByRole('button', { name: 'Active' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('dispatches SET_FILTER on button click', async () => {
+  it('calls setFilter with active on Active button click', async () => {
     render(<FilterBar />);
     await userEvent.click(screen.getByRole('button', { name: 'Active' }));
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'SET_FILTER', payload: 'active' });
+    expect(mockSetFilter).toHaveBeenCalledWith('active');
   });
 });

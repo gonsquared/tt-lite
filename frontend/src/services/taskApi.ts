@@ -9,9 +9,6 @@ type ApiErrorBody = {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (response.ok) {
-    if (response.status === 204) {
-      return undefined as T;
-    }
     return response.json() as Promise<T>;
   }
 
@@ -58,5 +55,16 @@ export async function deleteTask(id: string): Promise<void> {
   const response = await fetch(`${BASE_URL}/tasks/${id}`, {
     method: 'DELETE',
   });
-  return handleResponse<void>(response);
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
+    try {
+      const body: ApiErrorBody = await response.json();
+      if (body.error) {
+        errorMessage = body.error;
+      }
+    } catch {
+      // use default message if JSON parse fails
+    }
+    throw new Error(errorMessage);
+  }
 }

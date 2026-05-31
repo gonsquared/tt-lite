@@ -32,7 +32,7 @@ function TestConsumer() {
         <div key={t.id} data-testid={`task-${t.id}`}>
           <span data-testid={`title-${t.id}`}>{t.title}</span>
           <span data-testid={`completed-${t.id}`}>{String(t.completed)}</span>
-          <button onClick={() => void toggleTask(t.id)}>toggle</button>
+          <button onClick={() => void toggleTask(t.id, t.completed)}>toggle</button>
           <button onClick={() => void deleteTask(t.id)}>delete</button>
         </div>
       ))}

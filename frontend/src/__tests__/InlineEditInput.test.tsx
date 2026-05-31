@@ -84,6 +84,27 @@ describe('InlineEditInput', () => {
     expect(onCommit).toHaveBeenCalled();
   });
 
+  it('does not call onCommit when Escape is pressed (blur after Escape is suppressed)', async () => {
+    const onCommit = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <div>
+        <InlineEditInput
+          value="task"
+          onChange={() => undefined}
+          onCommit={onCommit}
+          onCancel={onCancel}
+        />
+        <button type="button">Other</button>
+      </div>,
+    );
+    const input = screen.getByRole('textbox');
+    input.focus();
+    await userEvent.keyboard('{Escape}');
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
   it('forwards ref correctly', () => {
     const ref = createRef<HTMLInputElement>();
     render(

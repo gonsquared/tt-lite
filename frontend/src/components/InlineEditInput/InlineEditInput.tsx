@@ -1,4 +1,4 @@
-import { forwardRef, type KeyboardEvent, type ChangeEvent } from 'react';
+import { forwardRef, useRef, type KeyboardEvent, type ChangeEvent } from 'react';
 import styles from './InlineEditInput.module.css';
 
 type InlineEditInputProps = {
@@ -15,6 +15,8 @@ export const InlineEditInput = forwardRef<HTMLInputElement, InlineEditInputProps
     { value, onChange, onCommit, onCancel, ariaLabel, ariaDescribedBy },
     ref,
   ) {
+    const cancelledRef = useRef(false);
+
     function handleChange(e: ChangeEvent<HTMLInputElement>) {
       onChange(e.target.value);
     }
@@ -25,8 +27,16 @@ export const InlineEditInput = forwardRef<HTMLInputElement, InlineEditInputProps
         onCommit();
       } else if (e.key === 'Escape') {
         e.preventDefault();
+        cancelledRef.current = true;
         onCancel();
       }
+    }
+
+    function handleBlur() {
+      if (!cancelledRef.current) {
+        onCommit();
+      }
+      cancelledRef.current = false;
     }
 
     return (
@@ -37,7 +47,7 @@ export const InlineEditInput = forwardRef<HTMLInputElement, InlineEditInputProps
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        onBlur={onCommit}
+        onBlur={handleBlur}
         aria-label={ariaLabel}
         aria-describedby={ariaDescribedBy}
         autoComplete="off"

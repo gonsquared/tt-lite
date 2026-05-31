@@ -9,10 +9,10 @@ const FILTERS: { value: FilterType; label: string }[] = [
 ];
 
 export function FilterBar() {
-  const { state, dispatch } = useTaskContext();
+  const { state, setFilter } = useTaskContext();
 
   function handleFilterClick(filter: FilterType) {
-    dispatch({ type: 'SET_FILTER', payload: filter });
+    setFilter(filter);
   }
 
   return (

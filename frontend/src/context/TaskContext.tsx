@@ -83,11 +83,11 @@ function reducer(state: State, action: Action): State {
 
 type TaskContextValue = {
   state: State;
-  dispatch: React.Dispatch<Action>;
+  setFilter: (filter: FilterType) => void;
   addTask: (title: string) => Promise<void>;
   updateTask: (id: string, patch: { title?: string; completed?: boolean }) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
-  toggleTask: (id: string) => Promise<void>;
+  toggleTask: (id: string, currentCompleted: boolean) => Promise<void>;
   retryFetch: () => Promise<void>;
 };
 
@@ -132,15 +132,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'DELETE_TASK', payload: id });
   }, []);
 
-  const toggleTask = useCallback(
-    async (id: string) => {
-      const task = state.tasks.find((t) => t.id === id);
-      if (!task) return;
-      const updated = await taskApi.updateTask(id, { completed: !task.completed });
-      dispatch({ type: 'UPDATE_TASK', payload: updated });
-    },
-    [state.tasks],
-  );
+  const toggleTask = useCallback(async (id: string, currentCompleted: boolean) => {
+    const updated = await taskApi.updateTask(id, { completed: !currentCompleted });
+    dispatch({ type: 'UPDATE_TASK', payload: updated });
+  }, []);
+
+  const setFilter = useCallback((filter: FilterType) => {
+    dispatch({ type: 'SET_FILTER', payload: filter });
+  }, []);
 
   const retryFetch = useCallback(async () => {
     await loadTasks();
@@ -148,7 +147,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaskContext.Provider
-      value={{ state, dispatch, addTask, updateTask, deleteTask, toggleTask, retryFetch }}
+      value={{ state, setFilter, addTask, updateTask, deleteTask, toggleTask, retryFetch }}
     >
       {children}
     </TaskContext.Provider>

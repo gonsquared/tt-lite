@@ -13,7 +13,7 @@ describe('TaskForm', () => {
     mockAddTask.mockReset();
     vi.mocked(useTaskContext).mockReturnValue({
       state: { tasks: [], filter: 'all', isLoading: false, error: null },
-      dispatch: vi.fn(),
+      setFilter: vi.fn(),
       addTask: mockAddTask,
       updateTask: vi.fn(),
       deleteTask: vi.fn(),
