@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts",
+    "start": "bun dist/index.js",
+    "dev": "bun --watch src/index.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
@@ -23,7 +23,6 @@
     "@types/supertest": "^6.0.2",
     "@vitest/coverage-v8": "^1.2.2",
     "supertest": "^6.3.4",
-    "tsx": "^4.7.1",
     "typescript": "^5.3.3",
     "vitest": "^1.2.2"
   }

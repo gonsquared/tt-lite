@@ -1,25 +1,25 @@
 # Stage 1: Builder
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY tsconfig.json ./
 COPY src/ ./src/
 
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Runtime
-FROM node:20-alpine AS runtime
+FROM oven/bun:1-alpine AS runtime
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
 
 COPY --from=builder /app/dist ./dist
 
@@ -31,4 +31,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:3001/api/health || exit 1
 
-CMD ["node", "dist/index.js"]
+CMD ["bun", "dist/index.js"]

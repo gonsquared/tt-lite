@@ -23,7 +23,7 @@ A full-stack task management application. Users can create, edit, complete, filt
 
 | Concern | Decision | Rationale |
 |---|---|---|
-| Backend language | TypeScript on Node.js | Type safety, shared language with frontend, strong ecosystem |
+| Backend language | TypeScript on Bun | Type safety, shared language with frontend, strong ecosystem; Bun as runtime and package manager |
 | Backend framework | Fastify v4 | Low overhead, built-in schema validation hooks, Pino logger included |
 | Input validation | Zod | Composable schemas, precise error messages, TypeScript inference |
 | Database | SQLite via better-sqlite3 | Zero-dependency server, synchronous API simplifies service layer, appropriate for a single-node app |
@@ -35,7 +35,7 @@ A full-stack task management application. Users can create, edit, complete, filt
 | Backend tests | Vitest + Supertest | In-process Fastify server; fast, no network round-trip |
 | Frontend tests | Vitest + React Testing Library | Component-level unit tests that exercise real DOM behaviour |
 | E2E tests | Cypress | Full browser automation covering the 6 critical user flows |
-| Containerisation | Docker multi-stage builds | Small production images; native module compilation (better-sqlite3) handled in the builder stage |
+| Containerisation | Docker multi-stage builds | Small production images; native module compilation (better-sqlite3) handled in the builder stage; uses `oven/bun:1-alpine` base images |
 
 ---
 
@@ -63,7 +63,7 @@ tt-lite/
         taskService.test.ts   # 21 unit tests (in-memory SQLite)
       integration/
         tasks.routes.test.ts  # 27 integration tests via Supertest
-    Dockerfile                # Multi-stage: node:20-alpine builder -> runtime
+    Dockerfile                # Multi-stage: oven/bun:1-alpine builder -> runtime
     .dockerignore
     package.json
   frontend/
@@ -97,7 +97,7 @@ tt-lite/
       support/
         commands.ts           # Custom commands: createTaskViaApi, clearAllTasksViaApi
         e2e.ts                # Imports commands
-    Dockerfile                # Multi-stage: node:20-alpine builder -> nginx:alpine
+    Dockerfile                # Multi-stage: oven/bun:1-alpine builder -> nginx:alpine
     .dockerignore
     nginx.conf                # Proxies /api/ to backend, SPA fallback routing, gzip
     cypress.config.ts
@@ -110,20 +110,19 @@ tt-lite/
 
 ### Prerequisites
 
-- Node.js 20 or later
-- npm 9 or later
+- Bun 1.x or later (`curl -fsSL https://bun.sh/install | bash`)
 
 ### 1. Install backend dependencies
 
 ```bash
 cd backend
-npm install
+bun install
 ```
 
 ### 2. Start the backend
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 The backend starts on `http://localhost:3001`. It creates `tasks.db` in the current directory on first run.
@@ -134,13 +133,13 @@ Open a second terminal.
 
 ```bash
 cd frontend
-npm install
+bun install
 ```
 
 ### 4. Start the frontend
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 The Vite dev server starts on `http://localhost:5173`. API calls to `/api/*` are proxied to `http://localhost:3001` by the Vite dev server configuration, so no CORS configuration is needed during local development.
@@ -168,7 +167,7 @@ Vite bakes `VITE_*` variables into the bundle at build time. They cannot be chan
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_API_BASE_URL` | `/api` | Base path for all API requests. When using Docker Compose the default `/api` is correct because nginx proxies `/api/` to the backend. In local dev the Vite proxy handles it. Set this before running `npm run build`. |
+| `VITE_API_BASE_URL` | `/api` | Base path for all API requests. When using Docker Compose the default `/api` is correct because nginx proxies `/api/` to the backend. In local dev the Vite proxy handles it. Set this before running `bun run build`. |
 
 ---
 
@@ -249,10 +248,10 @@ Both test suites use an in-memory SQLite database (`DATABASE_PATH=:memory:`) and
 cd backend
 
 # Run unit tests (21 tests) + integration tests (27 tests)
-npm test
+bun run test
 
 # Run with coverage report
-npm run test:coverage
+bun run test:coverage
 ```
 
 **Unit tests** (`tests/unit/taskService.test.ts`) exercise the service layer functions (`createTask`, `getAllTasks`, `getTaskById`, `updateTask`, `deleteTask`) directly against an in-memory database.
@@ -265,10 +264,10 @@ npm run test:coverage
 cd frontend
 
 # Run all Vitest unit tests (60 tests across 11 test files)
-npm test
+bun run test
 
 # Run with coverage report
-npm run test:coverage
+bun run test:coverage
 ```
 
 Test files live in `frontend/src/__tests__/`. Each component and the `taskApi` service module has a corresponding test file.
@@ -281,14 +280,14 @@ Cypress tests require both the backend and frontend to be running before executi
 
 ```bash
 cd backend
-npm run dev
+bun run dev
 ```
 
 **2. Start the frontend dev server** (in a second terminal):
 
 ```bash
 cd frontend
-npm run dev
+bun run dev
 ```
 
 **3. Run Cypress** (in a third terminal):
@@ -297,12 +296,12 @@ npm run dev
 cd frontend
 
 # Interactive mode (opens the Cypress GUI)
-npm run cy:open
+bun run cy:open
 
 # Headless mode (CI-friendly)
-npm run cy:run
+bun run cy:run
 # or
-npm run test:e2e
+bun run test:e2e
 ```
 
 Cypress is configured with `baseUrl: http://localhost:5173` and `apiUrl: http://localhost:3001`. The 24 E2E tests cover 6 critical user flows:
@@ -361,14 +360,14 @@ docker build -t tt-lite-frontend ./frontend
 ### Image details
 
 **Backend** (`backend/Dockerfile`):
-- Builder stage: `node:20-alpine` — installs all dependencies and compiles TypeScript.
-- Runtime stage: `node:20-alpine` — installs production-only dependencies, copies compiled `dist/`.
+- Builder stage: `oven/bun:1-alpine` — installs all dependencies and compiles TypeScript.
+- Runtime stage: `oven/bun:1-alpine` — installs production-only dependencies, copies compiled `dist/`.
 - Runs as a non-root user (`appuser`).
 - `HEALTHCHECK` polls `GET /api/health` every 30 seconds.
 - Exposes port `3001`.
 
 **Frontend** (`frontend/Dockerfile`):
-- Builder stage: `node:20-alpine` — installs dependencies and runs `npm run build`.
+- Builder stage: `oven/bun:1-alpine` — installs dependencies and runs `bun run build`.
 - Production stage: `nginx:alpine` — serves the static bundle from `/usr/share/nginx/html`.
 - Custom `nginx.conf` enables gzip compression, long-lived cache headers for hashed assets, proxies `/api/` to `http://backend:3001`, and uses a SPA fallback (`try_files`) for client-side routing.
 - Exposes port `80`.
@@ -388,10 +387,10 @@ Ensure the `sqlite-data` volume in `docker-compose.yml` is declared as a named t
 The backend defaults `CORS_ORIGIN` to `http://localhost:5173`. If the frontend runs on a different port or origin, set the `CORS_ORIGIN` environment variable on the backend before starting it. When using the Vite dev server, the built-in proxy handles `/api/` requests on the same origin, so CORS does not apply.
 
 **`VITE_API_BASE_URL` is not picking up changes.**
-This variable is baked into the bundle at `npm run build` time. Set it in the environment before building; changing it afterwards has no effect without rebuilding.
+This variable is baked into the bundle at `bun run build` time. Set it in the environment before building; changing it afterwards has no effect without rebuilding.
 
-**`better-sqlite3` native compilation fails during `npm install`.**
-`better-sqlite3` contains a native Node.js addon and requires build tools (`python3`, `make`, `g++`). The Docker builder stage (`node:20-alpine`) installs these automatically. For local development on a machine without build tools, install `build-essential` (Debian/Ubuntu) or `xcode-select --install` (macOS).
+**`better-sqlite3` native compilation fails during `bun install`.**
+`better-sqlite3` contains a native Node.js addon and requires build tools (`python3`, `make`, `g++`). The Docker builder stage (`oven/bun:1-alpine`) installs these automatically. For local development on a machine without build tools, install `build-essential` (Debian/Ubuntu) or `xcode-select --install` (macOS).
 
 **Cypress tests fail with "cannot connect to http://localhost:5173" or "http://localhost:3001".**
 Both the frontend dev server and the backend must be running before Cypress is started. Start them in separate terminals as described in the [Testing](#testing) section.
