@@ -17,7 +17,7 @@ export function TaskList() {
       case 'completed':
         return tasks.filter((t) => t.completed);
       default:
-        return tasks;
+        return [...tasks].sort((a, b) => Number(a.completed) - Number(b.completed));
     }
   }, [tasks, filter]);
 
