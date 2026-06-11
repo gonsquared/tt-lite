@@ -43,8 +43,9 @@ Thumbs.db
 .mcp.json
 .ripgreprc
 
-# Claude Code local settings (CLAUDE.md is tracked at root; .claude/ dir is local-only)
-.claude/
+# Claude Code local settings (CLAUDE.md is tracked at root)
+# .claude/settings.local.json is excluded (user-specific overrides)
+.claude/settings.local.json
 
 # Shell / user dotfiles and git user config (WSL and similar environments may surface these
 # in the project root as filesystem artifacts — these are not project files)

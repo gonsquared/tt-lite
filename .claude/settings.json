@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/user/tt-lite/.claude/hooks/run-hook.cmd session-start",
+            "async": false
+          }
+        ]
+      }
+    ]
+  }
+}
